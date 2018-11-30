@@ -1,7 +1,7 @@
 #ifndef COMPONENTB_HPP
 #define COMPONENTB_HPP
 
-#include "xcs.hpp"
+#include <xcs>
 
 struct ComponentB
 {

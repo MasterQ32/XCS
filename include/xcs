@@ -115,7 +115,8 @@ namespace xcs
 			auto pos = access.find(ent);
 			if(pos == access.end())
 				return false;
-			contents.erase(pos->second);
+			std::swap(*pos->second, contents.back());
+			contents.pop_back();
 			access.erase(ent);
 			return true;
 		}

@@ -1,4 +1,4 @@
-#include "xcs.hpp"
+#include "../include/xcs"
 
 namespace
 {

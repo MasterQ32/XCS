@@ -6,13 +6,13 @@ CONFIG -= qt
 QMAKE_CXXFLAGS += -std=c++17
 QMAKE_LFLAGS += -std=c++17
 
+include($$PWD/../XCS.pri)
+
 SOURCES += \
         main.cpp \
     componenta.cpp \
-    componentb.cpp \
-    xcs.cpp
+    componentb.cpp
 
 HEADERS += \
     componenta.hpp \
-    componentb.hpp \
-    xcs.hpp
+    componentb.hpp

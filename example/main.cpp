@@ -1,4 +1,4 @@
-#include "xcs.hpp"
+#include <xcs>
 
 #include "componenta.hpp"
 #include "componentb.hpp"
@@ -43,6 +43,10 @@ int main()
 
 	xcs::entity ent = scene.create_entity();
 
+	xcs::entity ent2 = *scene.create_entity_with_id(xcs::unique_id{42});
+
+	xcs::add_component<SomeComponent>(ent2).a = 42;
+
 	auto & c = xcs::add_component<SomeComponent>(ent);
 	c.a = 10;
 	c.b = 20;
@@ -58,6 +62,12 @@ int main()
 	xcs::remove_component<SomeComponent>(ent);
 	std::cout << ent.id << ":SomeComponent => " << xcs::get_component<SomeComponent>(ent) << std::endl;
 
+	std::cout << "pre-delete:" << std::endl;
+	system.update();
+
+	scene.destroy_entity(ent2);
+
+	std::cout << "post-delete:" << std::endl;
 	system.update();
 
 	return 0;

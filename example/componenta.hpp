@@ -1,7 +1,7 @@
 #ifndef COMPONENTA_HPP
 #define COMPONENTA_HPP
 
-#include "xcs.hpp"
+#include <xcs>
 
 struct ComponentA
 {
