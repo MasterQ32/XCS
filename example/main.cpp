@@ -45,6 +45,10 @@ int main()
 
 	xcs::entity ent2 = *scene.create_entity_with_id(xcs::unique_id{42});
 
+	xcs::entity ent3 = scene.create_entity();
+
+	xcs::add_component(ent3, "SomeComponent");
+
 	xcs::add_component<SomeComponent>(ent2).a = 42;
 
 	auto & c = xcs::add_component<SomeComponent>(ent);

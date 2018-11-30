@@ -3,7 +3,7 @@ CONFIG += console c++17
 CONFIG -= app_bundle
 CONFIG -= qt
 
-QMAKE_CXXFLAGS += -std=c++17
+QMAKE_CXXFLAGS += -std=c++17 -Werror=wrong-ident
 QMAKE_LFLAGS += -std=c++17
 
 include($$PWD/../XCS.pri)

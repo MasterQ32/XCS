@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace xcs
 {
@@ -39,7 +40,7 @@ namespace xcs
 		}
 
 		bool operator!=(unique_id const & other) const {
-			return (*this == other);
+			return !(*this == other);
 		}
 
 		bool operator<(unique_id const & other) const {
@@ -73,6 +74,10 @@ namespace xcs
 	{
 		virtual ~component_store_base() noexcept = default;
 
+		virtual void add_generic(unique_id ent) = 0;
+
+		virtual bool exists(unique_id id) = 0;
+
 		virtual bool remove(unique_id id) = 0;
 	};
 
@@ -101,6 +106,11 @@ namespace xcs
 				return nullptr;
 		}
 
+		bool exists(unique_id id) override
+		{
+			return (get(id) != nullptr);
+		}
+
 		T & add(unique_id ent)
 		{
 			if(auto * ptr = get(ent); ptr != nullptr)
@@ -108,6 +118,11 @@ namespace xcs
 			auto it = contents.emplace(contents.end(), ent, T { });
 			access[ent] = it;
 			return it->second;
+		}
+
+		void add_generic(unique_id ent) override
+		{
+			add(ent);
 		}
 
 		bool remove(unique_id ent) override
@@ -122,7 +137,6 @@ namespace xcs
 		}
 
 	public:
-
 		struct entity_component
 		{
 			entity const entity;
@@ -191,21 +205,25 @@ namespace xcs
 
 	struct meta_component_base
 	{
-		char const * const name;
+		std::string name;
 		std::size_t const id;
-		meta_component_base * const next;
-
-		explicit meta_component_base(char const * name) noexcept;
+		meta_component_base const * const next;
+	public:
+		explicit meta_component_base(std::string const & name) noexcept;
 
 		virtual ~meta_component_base() noexcept;
 
 		virtual std::unique_ptr<component_store_base> create_store(universe & universe) const = 0;
+	public:
+		static meta_component_base const & by_name(std::string const & name);
+
+		static meta_component_base const * find(std::string const & name);
 	};
 
 	template<typename T>
 	struct meta_component : meta_component_base
 	{
-		explicit meta_component(const char * name) : meta_component_base(name) { }
+		explicit meta_component(std::string const & name) : meta_component_base(name) { }
 		~meta_component() noexcept override = default;
 
 		std::unique_ptr<component_store_base> create_store(universe & universe) const override
@@ -280,34 +298,51 @@ namespace xcs
 			return existed;
 		}
 
+	private:
+		component_store_base & get_component_store(meta_component_base const & meta) const
+		{
+			auto it = component_stores.find(meta.id);
+			if(it != component_stores.end())
+				return *it->second.get();
+			component_stores.emplace(meta.id, meta.create_store(const_cast<universe&>(*this)));
+			return *component_stores.at(meta.id).get();
+		}
 	public:
 		template<typename T>
 		component_store<T> & get_components()
 		{
-			auto const & meta = get_meta_component<T>();
-			auto it = component_stores.find(meta.id);
-			if(it != component_stores.end())
-				return static_cast<component_store<T>&>(*it->second.get());
-			component_stores.emplace(meta.id, meta.create_store(*this));
-			return static_cast<component_store<T>&>(*component_stores.at(meta.id).get());
+			return static_cast<component_store<T>&>(get_component_store(get_meta_component<T>()));
 		}
 
 		template<typename T>
 		component_store<T> const & get_components() const
 		{
-			auto const & meta = get_meta_component<T>();
-			auto it = component_stores.find(meta.id);
-			if(it != component_stores.end())
-				return static_cast<component_store<T>&>(*it->second.get());
-			component_stores.emplace(meta.id, meta.create_store(*this));
-			return static_cast<component_store<T>&>(*component_stores.at(meta.id).get());
+			return static_cast<component_store<T>&>(get_component_store(get_meta_component<T>()));
+		}
+
+		component_store_base & get_components(std::string const & name)
+		{
+			 return get_component_store(meta_component_base::by_name(name));
+		}
+
+		component_store_base const & get_components(std::string const & name) const
+		{
+			 return get_component_store(meta_component_base::by_name(name));
 		}
 	};
+
+	// Typed API:
 
 	template<typename T>
 	inline T & add_component(entity ent)
 	{
 		return ent.universe.get_components<T>().add(ent.id);
+	}
+
+	template<typename T>
+	inline bool has_component(entity ent)
+	{
+		return ent.universe.get_components<T>().exists(ent.id);
 	}
 
 	template<typename T>
@@ -321,6 +356,32 @@ namespace xcs
 	{
 		return ent.universe.get_components<T>().remove(ent.id);
 	}
+
+	// Named API:
+
+	inline bool add_component(entity ent, std::string const & name)
+	{
+		if(meta_component_base::find(name) == nullptr)
+			return false;
+		ent.universe.get_components(name).add_generic(ent.id);
+		return true;
+	}
+
+	inline bool has_component(entity ent, std::string const & name)
+	{
+		if(meta_component_base::find(name) == nullptr)
+			return false;
+		return ent.universe.get_components(name).exists(ent.id);
+	}
+
+	inline bool remove_component(entity ent, std::string const & name)
+	{
+		if(meta_component_base::find(name) == nullptr)
+			return false;
+		return ent.universe.get_components(name).remove(ent.id);
+	}
+
+	// helper for component stores in a universe
 
 	template<typename T>
 	inline component_store<T> & get_components(universe & universe)
