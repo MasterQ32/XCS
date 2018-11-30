@@ -8,11 +8,11 @@ QMAKE_LFLAGS += -std=c++17
 
 SOURCES += \
         main.cpp \
-    ecs.cpp \
     componenta.cpp \
-    componentb.cpp
+    componentb.cpp \
+    xcs.cpp
 
 HEADERS += \
-    ecs.hpp \
     componenta.hpp \
-    componentb.hpp
+    componentb.hpp \
+    xcs.hpp

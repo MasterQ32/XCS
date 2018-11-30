@@ -1,25 +1,64 @@
+#include "xcs.hpp"
+
 #include "componenta.hpp"
 #include "componentb.hpp"
 
 #include <iostream>
 
-int main()
+struct SomeComponent
 {
-	std::cout << "Components registered:" << std::endl;
-	for(auto const * it = ecs::MetaComponent::first(); it != nullptr; it = it->next)
+	int a, b;
+};
+
+XCS_REGISTER_COMPONENT(SomeComponent)
+
+struct SomeSystem
+{
+	xcs::universe & universe;
+
+	SomeSystem(xcs::universe & uni) : universe(uni)
 	{
-		std::cout << "[@" << it->id << "] = '" << it->name << "'" << std::endl;
 	}
 
-	ecs::Entity ent;
+	void update()
+	{
+		for(auto element : xcs::get_components<SomeComponent>(universe))
+		{
+			std::cout
+				<< element.entity.id
+			    << " => ("
+			    << element.component.a
+			    << ", " << element.component.b
+			    << ")"
+			    << std::endl
+			    ;
+		}
+	}
+};
 
-	ent.AddComponent<ComponentA>();
-	ent.AddComponent<ComponentB>();
-	ent.RemoveComponent<ComponentA>();
-	ent.AddComponent<ComponentA>();
+int main()
+{
+	xcs::universe scene;
+	SomeSystem system(scene);
 
-	std::cout << ".A => " << ent.GetComponent<ComponentA>() << std::endl;
-	std::cout << ".B => " << ent.GetComponent<ComponentB>() << std::endl;
+	xcs::entity ent = scene.create_entity();
+
+	auto & c = xcs::add_component<SomeComponent>(ent);
+	c.a = 10;
+	c.b = 20;
+
+	std::cout << ent.id << ":SomeComponent => " << xcs::get_component<SomeComponent>(ent) << std::endl;
+
+	system.update();
+
+	c.b = 30;
+
+	system.update();
+
+	xcs::remove_component<SomeComponent>(ent);
+	std::cout << ent.id << ":SomeComponent => " << xcs::get_component<SomeComponent>(ent) << std::endl;
+
+	system.update();
 
 	return 0;
 }

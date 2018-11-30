@@ -1,15 +1,13 @@
 #ifndef COMPONENTA_HPP
 #define COMPONENTA_HPP
 
-#include "ecs.hpp"
+#include "xcs.hpp"
 
-
-class ComponentA : public ecs::Component
+struct ComponentA
 {
-public:
-	ComponentA();
+	xcs::unique_id other;
 };
 
-ECS_REGISTER_COMPONENT("Komponente A", ComponentA)
+XCS_REGISTER_COMPONENT(ComponentA)
 
 #endif // COMPONENTA_HPP
